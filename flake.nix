@@ -79,8 +79,6 @@
                 serviceConfig = {
                   ExecStart = "${lib.getExe termappchooser}";
                   Restart = "on-failure";
-                  Type = "dbus";
-                  BusName = "org.freedesktop.impl.portal.desktop.termappchooser";
                 };
               };
             };
