@@ -47,5 +47,40 @@
             echo "  nix run - Build and run with Nix"
           '';
         };
-      });
+      }) // {
+        nixosModules.default = { config, lib, pkgs, ... }: 
+          with lib;
+          let
+            cfg = config.services.xdg-portal-termappchooser;
+            termappchooser = self.packages.${pkgs.system}.default;
+          in
+          {
+            options.services.xdg-portal-termappchooser = {
+              enable = mkEnableOption "XDG Portal Terminal App Chooser";
+            };
+
+            config = mkIf cfg.enable {
+              xdg.portal = {
+                enable = true;
+                extraPortals = [ termappchooser ];
+                config = {
+                  hyprland = {
+                    "org.freedesktop.impl.portal.AppChooser" = "termappchooser";
+                  };
+                };
+              };
+
+              systemd.user.services.xdg-desktop-portal-termappchooser = {
+                after = ["graphical-session.target"];
+                wantedBy = ["graphical-session.target"];
+                serviceConfig = {
+                  ExecStart = "${lib.getExe termappchooser}";
+                  Restart = "on-failure";
+                  Type = "dbus";
+                  BusName = "org.freedesktop.impl.portal.desktop.termappchooser";
+                };
+              };
+            };
+          };
+      };
 }
