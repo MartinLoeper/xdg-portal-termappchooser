@@ -93,7 +93,7 @@ func main() {
 	appChooser := &AppChooser{conn: conn}
 
 	// Export the object
-	err = conn.Expasdfsdafort(appChooser, dbusPath, dbusInterface)
+	err = conn.Export(appChooser, dbusPath, dbusInterface)
 	if err != nil {
 		log.Fatalf("Failed to export object: %v", err)
 	}
