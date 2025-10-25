@@ -1,0 +1,18 @@
+# XDG Portal Terminal App Chooser
+
+# Binaries
+xdg-portal-termappchooser
+
+# Go build artifacts
+go.sum
+
+# IDE
+.vscode/
+.idea/
+
+# Nix
+result
+result-*
+
+# Logs
+*.log
