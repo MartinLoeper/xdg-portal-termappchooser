@@ -67,6 +67,9 @@
                   hyprland = {
                     "org.freedesktop.impl.portal.AppChooser" = "termappchooser";
                   };
+                  common = {
+                    "org.freedesktop.impl.portal.AppChooser" = "termappchooser";
+                  };
                 };
               };
 
