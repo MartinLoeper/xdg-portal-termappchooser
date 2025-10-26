@@ -84,7 +84,7 @@
                   Description = "XDG Desktop Portal Terminal App Chooser Service";
                 };
 
-                WantedBy = ["graphical-session.target"];
+                wantedBy = ["graphical-session.target"];
                 
                 serviceConfig = {
                   ExecStart = "${lib.getExe termappchooser}";
