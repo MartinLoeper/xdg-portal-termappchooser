@@ -1,0 +1,3 @@
+[portal]
+DBusName=org.freedesktop.impl.portal.desktop.termappchooser
+Interfaces=org.freedesktop.impl.portal.AppChooser;

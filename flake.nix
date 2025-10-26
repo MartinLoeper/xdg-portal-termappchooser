@@ -17,6 +17,10 @@
           version = "0.1.0";
           
           src = ./.;
+
+          postInstall = ''
+            cp -r data/share $out/share
+          '';
           
           vendorHash = "sha256-VtGat4ek0ij8GOx68MQPNFtBuansj/d1GCOgfLOiGwM=";
           
@@ -74,11 +78,11 @@
               };
 
               systemd.user.services.xdg-desktop-portal-termappchooser = {
-                after = ["graphical-session.target"];
-                wantedBy = ["graphical-session.target"];
                 serviceConfig = {
                   ExecStart = "${lib.getExe termappchooser}";
                   Restart = "on-failure";
+                  Type = "dbus";
+                  BusName = "org.freedesktop.impl.portal.desktop.termappchooser";
                 };
               };
             };
