@@ -86,11 +86,11 @@
                 config = {
                   hyprland = {
                     "org.freedesktop.impl.portal.AppChooser" = "termappchooser";
-                    "org.freedesktop.impl.portal.OpenURI" = "termappchooser";
+                    "org.freedesktop.portal.OpenURI" = "termappchooser";
                   };
                   common = {
                     "org.freedesktop.impl.portal.AppChooser" = "termappchooser";
-                    "org.freedesktop.impl.portal.OpenURI" = "termappchooser";
+                    "org.freedesktop.portal.OpenURI" = "termappchooser";
                   };
                 };
               };
