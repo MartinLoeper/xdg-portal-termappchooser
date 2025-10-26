@@ -2,7 +2,7 @@
 
 ## Overview
 
-This application integrates into the XDG Desktop Portal ecosystem as a specialized backend implementation for the AppChooser interface. It provides application selection functionality through the standardized D-Bus portal framework.
+This application integrates into the XDG Desktop Portal ecosystem as a specialized backend implementation for both AppChooser and OpenURI interfaces. It provides application selection functionality and automatic URI/file opening through the standardized D-Bus portal framework.
 
 ## XDG Desktop Portal Ecosystem
 
@@ -22,7 +22,8 @@ This application integrates into the XDG Desktop Portal ecosystem as a specializ
                        │ └──────────────────┘ │    │ ┌─────────────────┐ │
                        └──────────────────────┘    │ │ termappchooser  │ │
                                                    │ │                 │ │
-                                                   │ │ AppChooser Only │ │
+                                                   │ │ AppChooser +    │ │
+                                                   │ │ OpenURI         │ │
                                                    │ └─────────────────┘ │
                                                    └─────────────────────┘
 ```
@@ -47,13 +48,13 @@ This application integrates into the XDG Desktop Portal ecosystem as a specializ
 ┌─────────────────────────────────────────────────────────┐
 │ [portal]                                                │
 │ DBusName=org.freedesktop.impl.portal.desktop.termapp... │
-│ Interfaces=org.freedesktop.impl.portal.AppChooser      │
+│ Interfaces=org.freedesktop.impl.portal.AppChooser;OpenURI │
 │ UseIn=hyprland;sway;river                               │
 └─────────────────────────────────────────────────────────┘
                                │
                                ▼
         xdg-desktop-portal reads configuration and routes
-        AppChooser requests to termappchooser backend
+        AppChooser and OpenURI requests to termappchooser backend
 ```
 
 ### 3. Request Flow
@@ -103,6 +104,74 @@ UpdateChoices(
 )
 ```
 
+### Interface: `org.freedesktop.impl.portal.OpenURI`
+
+#### Method: OpenURI
+```
+OpenURI(
+    handle: ObjectPath,           // Request handle for cancellation
+    app_id: String,              // Calling application ID
+    parent_window: String,        // Window identifier for modal dialogs
+    uri: String,                 // URI to open (http, https, ftp, etc.)
+    options: Map<String,Variant>  // Additional options (ask, writable, etc.)
+) → (response: UInt32, results: Map<String,Variant>)
+```
+
+**Implementation Flow:**
+1. Parse URI and determine MIME type
+2. Use GIO to find default application for URI scheme/MIME type
+3. Launch application using `g_app_info_launch_uris`
+4. Show notification with chosen application name
+5. Provide notification action for changing default (placeholder)
+
+#### Method: OpenFile
+```
+OpenFile(
+    handle: ObjectPath,           // Request handle for cancellation  
+    app_id: String,              // Calling application ID
+    parent_window: String,        // Window identifier for modal dialogs
+    fd: UnixFD,                  // File descriptor for file to open
+    options: Map<String,Variant>  // Additional options (ask, writable, etc.)
+) → (response: UInt32, results: Map<String,Variant>)
+```
+
+**Implementation Flow:**
+1. Get file path from file descriptor
+2. Determine MIME type using GIO
+3. Find default application for MIME type
+4. Launch application with file URI
+5. Show notification and provide default change action
+
+#### Method: OpenDirectory
+```
+OpenDirectory(
+    handle: ObjectPath,           // Request handle for cancellation
+    app_id: String,              // Calling application ID  
+    parent_window: String,        // Window identifier for modal dialogs
+    fd: UnixFD,                  // File descriptor for directory
+    options: Map<String,Variant>  // Additional options
+) → (response: UInt32, results: Map<String,Variant>)
+```
+
+**Implementation Flow:**
+1. Get directory path from file descriptor
+2. Use file manager D-Bus interface or fallback to directory opener
+3. Show directory in file manager with optional selection
+4. Notification feedback for user awareness
+
+#### Method: SchemeSupported
+```
+SchemeSupported(
+    scheme: String,              // URI scheme to check (http, ftp, etc.)
+    options: Map<String,Variant>  // Reserved for future options
+) → (supported: Boolean)
+```
+
+**Implementation Flow:**
+1. Query GIO for applications supporting the scheme
+2. Return true if any applications found
+3. Cache results for performance
+
 ## Portal Backend Requirements
 
 ### systemd User Service (Primary Method)
@@ -146,10 +215,23 @@ SystemdService=xdg-desktop-portal-termappchooser.service
 - Respects application priorities and defaults
 
 ### 3. User Interface
-- Spawns fuzzel as external process
-- Formats application list for display
+- **AppChooser**: Spawns fuzzel as external process for interactive selection
+- **OpenURI**: Automatic selection with notification feedback
+- Formats application list for display (fuzzel only)
 - Handles user selection and cancellation
 - Returns result via D-Bus response
+
+### 4. GIO Integration (OpenURI)
+- Uses `github.com/linuxdeepin/go-gir/gio-2.0` for MIME type detection
+- Leverages `gio.AppInfoGetDefaultForType()` for default app selection
+- Launches applications via `g_app_info_launch_uris()`
+- Follows patterns from linuxdeepin/go-lib mime handling
+
+### 5. Notification System
+- Uses libnotify for desktop notifications
+- Informs user of automatically chosen applications
+- Provides action buttons for changing defaults
+- Placeholder implementation for future preference management
 
 ## Security Model
 
