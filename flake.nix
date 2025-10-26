@@ -81,8 +81,11 @@
                 unitConfig = {
                   After = ["graphical-session.target"];
                   PartOf = ["graphical-session.target"];
-                  WantedBy = ["graphical-session.target"];
                   Description = "XDG Desktop Portal Terminal App Chooser Service";
+                };
+
+                installConfig = {
+                  WantedBy = ["graphical-session.target"];
                 };
                 
                 serviceConfig = {
