@@ -78,6 +78,13 @@
               };
 
               systemd.user.services.xdg-desktop-portal-termappchooser = {
+                unitConfig = {
+                  after = ["graphical-session.target"];
+                  partOf = ["graphical-session.target"];
+                  wantedBy = ["graphical-session.target"];
+                  description = "XDG Desktop Portal Terminal App Chooser Service";
+                };
+                
                 serviceConfig = {
                   ExecStart = "${lib.getExe termappchooser}";
                   Restart = "on-failure";

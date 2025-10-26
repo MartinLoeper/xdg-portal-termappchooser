@@ -105,16 +105,8 @@ UpdateChoices(
 
 ## Portal Backend Requirements
 
-### D-Bus Service File
-```ini
-# ~/.local/share/dbus-1/services/org.freedesktop.impl.portal.desktop.termappchooser.service
-[D-BUS Service]
-Name=org.freedesktop.impl.portal.desktop.termappchooser
-Exec=/path/to/xdg-portal-termappchooser
-SystemdService=xdg-desktop-portal-termappchooser.service
-```
-
-### systemd User Service
+### systemd User Service (Primary Method)
+Modern portal backends use systemd with D-Bus integration for activation:
 ```ini
 # ~/.config/systemd/user/xdg-desktop-portal-termappchooser.service
 [Unit]
@@ -126,6 +118,19 @@ Type=dbus
 BusName=org.freedesktop.impl.portal.desktop.termappchooser
 ExecStart=/path/to/xdg-portal-termappchooser
 Restart=on-failure
+```
+
+With `Type=dbus`, systemd handles D-Bus activation automatically - no separate D-Bus service file needed!
+
+### Legacy D-Bus Service File (Optional)
+Only required for systems without systemd D-Bus integration:
+
+```ini
+# ~/.local/share/dbus-1/services/org.freedesktop.impl.portal.desktop.termappchooser.service
+[D-BUS Service]
+Name=org.freedesktop.impl.portal.desktop.termappchooser
+Exec=/path/to/xdg-portal-termappchooser
+SystemdService=xdg-desktop-portal-termappchooser.service
 ```
 
 ## Integration Points
