@@ -8,9 +8,7 @@ We are writing a Go application that implements the `org.freedesktop.impl.portal
 
 - **Language**: Go
 - **D-Bus Library**: `godbus/dbus`
-- **Interfaces**: 
-  - `org.freedesktop.impl.portal.AppChooser`
-  - `org.freedesktop.impl.portal.OpenURI`
+- **Interface**: `org.freedesktop.impl.portal.AppChooser`
 - **Initial Functionality**: Console logging of intercepted requests
 
 ## Specification
@@ -22,9 +20,4 @@ Agents may use the fetch_webpage tool to retrieve the latest specification detai
 
 ## End Goal
 
-The final implementation should spawn a fuzzel app launcher to allow users to select which application should fulfill:
-- `org.freedesktop.impl.portal.AppChooser.ChooseApplication` requests
-- `org.freedesktop.impl.portal.OpenURI.OpenURI` requests
-- `org.freedesktop.impl.portal.OpenURI.OpenFile` requests
-
-This ensures that both explicit app chooser requests AND URI/file opening requests get routed through our fuzzel-based selection interface.
+The final implementation should spawn a fuzzel app launcher to allow users to select which application should fulfill the `org.freedesktop.impl.portal.AppChooser.ChooseApplication` request.

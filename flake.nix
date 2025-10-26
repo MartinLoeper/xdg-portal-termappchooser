@@ -66,7 +66,9 @@
                 config = {
                   hyprland = {
                     "org.freedesktop.impl.portal.AppChooser" = "termappchooser";
-                    "org.freedesktop.impl.portal.OpenURI" = "termappchooser";
+                  };
+                  common = {
+                    "org.freedesktop.impl.portal.AppChooser" = "termappchooser";
                   };
                 };
               };

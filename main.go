@@ -12,19 +12,18 @@ import (
 )
 
 const (
-	dbusName           = "org.freedesktop.impl.portal.desktop.termappchooser"
-	dbusPath           = "/org/freedesktop/portal/desktop"
-	appChooserInterface = "org.freedesktop.impl.portal.AppChooser"
-	openURIInterface    = "org.freedesktop.impl.portal.OpenURI"
+	dbusName      = "org.freedesktop.impl.portal.desktop.termappchooser"
+	dbusPath      = "/org/freedesktop/portal/desktop"
+	dbusInterface = "org.freedesktop.impl.portal.AppChooser"
 )
 
-// PortalBackend implements both AppChooser and OpenURI interfaces
-type PortalBackend struct {
+// AppChooser implements the org.freedesktop.impl.portal.AppChooser interface
+type AppChooser struct {
 	conn *dbus.Conn
 }
 
 // ChooseApplication handles the ChooseApplication D-Bus method
-func (pb *PortalBackend) ChooseApplication(
+func (ac *AppChooser) ChooseApplication(
 	handle dbus.ObjectPath,
 	appID string,
 	parentWindow string,
@@ -52,7 +51,7 @@ func (pb *PortalBackend) ChooseApplication(
 }
 
 // UpdateChoices handles the UpdateChoices D-Bus method
-func (pb *PortalBackend) UpdateChoices(
+func (ac *AppChooser) UpdateChoices(
 	handle dbus.ObjectPath,
 	choices []string,
 ) *dbus.Error {
@@ -65,57 +64,7 @@ func (pb *PortalBackend) UpdateChoices(
 	return nil
 }
 
-// OpenURI handles the OpenURI D-Bus method
-func (pb *PortalBackend) OpenURI(
-	handle dbus.ObjectPath,
-	appID string,
-	parentWindow string,
-	uri string,
-	options map[string]dbus.Variant,
-) (uint32, map[string]dbus.Variant, *dbus.Error) {
-
-	fmt.Println("=== OpenURI.OpenURI Called ===")
-	fmt.Printf("Handle: %s\n", handle)
-	fmt.Printf("App ID: %s\n", appID)
-	fmt.Printf("Parent Window: %s\n", parentWindow)
-	fmt.Printf("URI: %s\n", uri)
-	fmt.Printf("Options: %v\n", options)
-	fmt.Println("===============================")
-
-	// TODO: Use fuzzel to let user choose application for this URI
-	// For now, just return success
-	results := make(map[string]dbus.Variant)
-	
-	// Return success response (0) and results
-	return 0, results, nil
-}
-
-// OpenFile handles the OpenFile D-Bus method
-func (pb *PortalBackend) OpenFile(
-	handle dbus.ObjectPath,
-	appID string,
-	parentWindow string,
-	fd dbus.UnixFD,
-	options map[string]dbus.Variant,
-) (uint32, map[string]dbus.Variant, *dbus.Error) {
-
-	fmt.Println("=== OpenURI.OpenFile Called ===")
-	fmt.Printf("Handle: %s\n", handle)
-	fmt.Printf("App ID: %s\n", appID)
-	fmt.Printf("Parent Window: %s\n", parentWindow)
-	fmt.Printf("File Descriptor: %d\n", fd)
-	fmt.Printf("Options: %v\n", options)
-	fmt.Println("===============================")
-
-	// TODO: Use fuzzel to let user choose application for this file
-	// For now, just return success
-	results := make(map[string]dbus.Variant)
-	
-	// Return success response (0) and results
-	return 0, results, nil
-}
-
-const appChooserIntrospectXML = `
+const introspectXML = `
 <interface name="org.freedesktop.impl.portal.AppChooser">
 	<method name="ChooseApplication">
 		<arg type="o" name="handle" direction="in"/>
@@ -132,28 +81,6 @@ const appChooserIntrospectXML = `
 	</method>
 </interface>` + introspect.IntrospectDataString
 
-const openURIIntrospectXML = `
-<interface name="org.freedesktop.impl.portal.OpenURI">
-	<method name="OpenURI">
-		<arg type="o" name="handle" direction="in"/>
-		<arg type="s" name="app_id" direction="in"/>
-		<arg type="s" name="parent_window" direction="in"/>
-		<arg type="s" name="uri" direction="in"/>
-		<arg type="a{sv}" name="options" direction="in"/>
-		<arg type="u" name="response" direction="out"/>
-		<arg type="a{sv}" name="results" direction="out"/>
-	</method>
-	<method name="OpenFile">
-		<arg type="o" name="handle" direction="in"/>
-		<arg type="s" name="app_id" direction="in"/>
-		<arg type="s" name="parent_window" direction="in"/>
-		<arg type="h" name="fd" direction="in"/>
-		<arg type="a{sv}" name="options" direction="in"/>
-		<arg type="u" name="response" direction="out"/>
-		<arg type="a{sv}" name="results" direction="out"/>
-	</method>
-</interface>` + introspect.IntrospectDataString
-
 func main() {
 	// Connect to the session bus
 	conn, err := dbus.ConnectSessionBus()
@@ -162,23 +89,17 @@ func main() {
 	}
 	defer conn.Close()
 
-	// Create portal backend instance
-	backend := &PortalBackend{conn: conn}
+	// Create AppChooser instance
+	appChooser := &AppChooser{conn: conn}
 
-	// Export AppChooser interface
-	err = conn.Export(backend, dbusPath, appChooserInterface)
+	// Export the object
+	err = conn.Export(appChooser, dbusPath, dbusInterface)
 	if err != nil {
-		log.Fatalf("Failed to export AppChooser interface: %v", err)
+		log.Fatalf("Failed to export object: %v", err)
 	}
 
-	// Export OpenURI interface
-	err = conn.Export(backend, dbusPath, openURIInterface)
-	if err != nil {
-		log.Fatalf("Failed to export OpenURI interface: %v", err)
-	}
-
-	// Export introspection data for AppChooser
-	err = conn.Export(introspect.Introspectable(appChooserIntrospectXML), dbusPath, "org.freedesktop.DBus.Introspectable")
+	// Export introspection data
+	err = conn.Export(introspect.Introspectable(introspectXML), dbusPath, "org.freedesktop.DBus.Introspectable")
 	if err != nil {
 		log.Fatalf("Failed to export introspectable: %v", err)
 	}
@@ -193,9 +114,9 @@ func main() {
 		log.Fatalf("Name already taken")
 	}
 
-	fmt.Printf("XDG Portal Backend started on bus name: %s\n", dbusName)
+	fmt.Printf("XDG Portal AppChooser started on bus name: %s\n", dbusName)
 	fmt.Printf("Object path: %s\n", dbusPath)
-	fmt.Printf("Interfaces: %s, %s\n", appChooserInterface, openURIInterface)
+	fmt.Printf("Interface: %s\n", dbusInterface)
 	fmt.Println("Waiting for requests...")
 
 	// Wait for signals
