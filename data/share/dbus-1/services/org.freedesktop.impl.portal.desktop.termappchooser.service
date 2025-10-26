@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.freedesktop.impl.portal.desktop.termappchooser
+Exec=xdg-portal-termappchooser
+SystemdService=xdg-desktop-portal-termappchooser.service
